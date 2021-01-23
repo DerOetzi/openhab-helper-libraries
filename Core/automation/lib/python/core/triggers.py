@@ -73,14 +73,12 @@ def when(target):
     try:
         from os import path
 
-        from org.quartz.CronExpression import isValidExpression
-
         from core.jsr223.scope import itemRegistry, things
         from core.log import logging, LOG_PREFIX
 
         try:
             from org.openhab.core.thing import ChannelUID, ThingUID, ThingStatus
-            from org.openab.core.thing.type import ChannelKind
+            from org.openhab.core.thing.type import ChannelKind
         except:
             from org.eclipse.smarthome.core.thing import ChannelUID, ThingUID, ThingStatus
             from org.eclipse.smarthome.core.thing.type import ChannelKind
@@ -90,13 +88,35 @@ def when(target):
         except:
             from org.openhab.core.types import TypeParser
 
+        try:
+            from org.quartz.CronExpression import isValidExpression
+        except:
+            # Quartz is removed in OH3, this needs to either impliment or match
+            # functionality in `org.openhab.core.internal.scheduler.CronAdjuster`
+            def isValidExpression(expr):
+                import re
+
+                expr = expr.strip()
+                if expr.startswith("@"):
+                    return re.match(r"@(annually|yearly|monthly|weekly|daily|hourly|reboot)", expr) is not None
+
+                parts = expr.split()
+                if 6 <= len(parts) <= 7:
+                    for i in range(len(parts)):
+                        if not re.match(
+                            r"\?|(\*|\d+)(\/\d+)?|(\d+|\w{3})(\/|-)(\d+|\w{3})|((\d+|\w{3}),)*(\d+|\w{3})", parts[i]
+                        ):
+                            return False
+                    return True
+                return False
+
         LOG = logging.getLogger(u"{}.core.triggers".format(LOG_PREFIX))
 
 
         def item_trigger(function):
             if not hasattr(function, 'triggers'):
                 function.triggers = []
-            
+
             if trigger_target in ["added", "removed", "updated"]:
                 event_names = {
                     "added": "ItemAddedEvent",

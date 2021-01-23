@@ -5,7 +5,10 @@ directory for new files and then process them.
 """
 from java.nio.file.StandardWatchEventKinds import ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY
 
-scriptExtension.importPreset(None)# fix for compatibility with Jython > 2.7.0
+try:
+    scriptExtension.importPreset(None)# fix for compatibility with Jython > 2.7.0
+except:
+    pass
 
 try:
     from org.openhab.core.automation.handler import TriggerHandler
@@ -104,3 +107,4 @@ def scriptUnloaded():
     automationManager.removeHandler(core.DIRECTORY_TRIGGER_MODULE_ID)
     automationManager.removeModuleType(core.DIRECTORY_TRIGGER_MODULE_ID)
     LOG.info("TriggerType and TriggerHandler removed '{}'".format(core.DIRECTORY_TRIGGER_MODULE_ID))
+    
